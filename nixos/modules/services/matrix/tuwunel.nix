@@ -209,14 +209,14 @@ in
       wantedBy = [ "multi-user.target" ];
       wants = [ "network-online.target" ];
       after = [ "network-online.target" ];
-      environment = lib.mkMerge [
-        { TUWUNEL_CONFIG = configFile; }
-        cfg.extraEnvironment
-      ];
+      environment = cfg.extraEnvironment;
+      reloadTriggers = [ configFile ];
+      restartTriggers = [ cfg.package ];
       startLimitBurst = 5;
       startLimitIntervalSec = 60;
       serviceConfig = {
-        Type = "notify";
+        Type = "notify-reload";
+        ReloadSignal = "SIGUSR1";
 
         DynamicUser = true;
         User = cfg.user;
@@ -261,7 +261,7 @@ in
         RuntimeDirectory = "tuwunel";
         RuntimeDirectoryMode = "0750";
 
-        ExecStart = lib.getExe cfg.package;
+        ExecStart = "${lib.getExe cfg.package} -c ${configFile}";
         Restart = "on-failure";
         RestartSec = 10;
       };
